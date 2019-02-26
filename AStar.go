@@ -1,7 +1,7 @@
 package PathFinderAlgo
 
 import "math"
-import "github.com/SCOTT-HAMILTON/PathFinderAlgo/Node"
+import "github.com/SCOTT-HAMILTON/Go-pathfinderalgo/Node"
 
 type AStar struct {
 	Nbw        int
