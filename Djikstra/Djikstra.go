@@ -15,8 +15,6 @@ func NewDjikstra(nbw int, nbh int, s int, e int, mapwalls *[]int) *Djikstra {
 
 func (djk *Djikstra) setupNeiImpl(nei *Node.NodeCase) {
 	nei.G = djk.CurNode.G + 1
-	nei.H = djk.Dist(nei.Pos, djk.End)
-	nei.H *= nei.H
-	nei.F = nei.G + nei.H
+	nei.F = nei.G
 	nei.Parent = djk.CurNode.Pos
 }
