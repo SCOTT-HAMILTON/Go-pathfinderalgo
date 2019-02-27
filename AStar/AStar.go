@@ -1,31 +1,44 @@
-package PathFinderAlgo
+package AStar
 
 import "math"
 import "github.com/SCOTT-HAMILTON/Go-pathfinderalgo/Node"
+import "github.com/SCOTT-HAMILTON/Go-pathfinderalgo/Algo"
 
-type AStar struct {
-	Nbw        int
-	Nbh        int
-	Start      int
-	End        int
-	CurNode    Node.NodeCase
-	Map_walls  *[]int
-	Path       []int
-	openList   []Node.NodeCase
-	closedList []Node.NodeCase
-	finished   bool
+type AStarInterface interface {
+	SetupNei(nei *Node.NodeCase)
 }
 
-func NewAStar(nbw int, nbh int, s int, e int, mapwalls *[]int) AStar {
-	return AStar{nbw, nbh, s, e, Node.NewNodeCase(), mapwalls, make([]int, 0), make([]Node.NodeCase, 0), make([]Node.NodeCase, 0), false}
+type AStar struct {
+	Algo.Algo
+	openList    []Node.NodeCase
+	closedList  []Node.NodeCase
+	FctSetupNei func(nei *Node.NodeCase)
+}
+
+func NewAStar(nbw int, nbh int, s int, e int, mapwalls *[]int) *AStar {
+	star := &AStar{Algo.NewAlgo(nbw, nbh, s, e, mapwalls), make([]Node.NodeCase, 0), make([]Node.NodeCase, 0), nil}
+	star.FctSetupNei = star.setupNeiImpl
+	return star
+}
+
+func (star *AStar) SetupNei(nei *Node.NodeCase) {
+	star.FctSetupNei(nei)
+}
+
+func (star *AStar) setupNeiImpl(nei *Node.NodeCase) {
+	nei.G = star.CurNode.G + 1
+	nei.H = star.Dist(nei.Pos, star.End)
+	nei.H *= nei.H
+	nei.F = nei.G + nei.H
+	nei.Parent = star.CurNode.Pos
 }
 
 func (star *AStar) IsFinished() bool {
-	return star.finished
+	return star.Finished
 }
 
 func (star *AStar) Init() {
-	star.finished = false
+	star.Finished = false
 	//Reset map cache
 	for i, n := range *star.Map_walls {
 		if n != 1 {
@@ -195,7 +208,7 @@ func (star *AStar) Update(done chan bool) {
 		done <- true
 	}()
 
-	if star.finished {
+	if star.Finished {
 		return
 	}
 
@@ -213,7 +226,7 @@ func (star *AStar) Update(done chan bool) {
 
 	//is the end
 	if star.CurNode.Pos == star.End {
-		star.finished = true
+		star.Finished = true
 		return
 	}
 
@@ -232,11 +245,7 @@ func (star *AStar) Update(done chan bool) {
 
 		(*star.Map_walls)[nei.Pos] = 2
 
-		nei.G = star.CurNode.G + 1
-		nei.H = star.Dist(nei.Pos, star.End)
-		nei.H *= nei.H
-		nei.F = nei.G + nei.H
-		nei.Parent = star.CurNode.Pos
+		star.SetupNei(&nei)
 		stop := false
 		for _, n := range star.openList {
 			if n.Pos == nei.Pos && nei.G > n.G {
